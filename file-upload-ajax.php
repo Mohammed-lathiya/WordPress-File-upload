@@ -1,0 +1,47 @@
+<?php
+
+function ms_file_data_ajax(){
+
+    //wp_send_json( array('success' => 'true') );
+
+    if(!empty($_FILES['file'])){ 
+        
+        // File upload configuration 
+
+        $upload = 'err';
+
+        $fileName = basename($_FILES['file']['name']);
+
+        $tmp_name = $_FILES['file']['tmp_name'];
+
+        $wordpress_upload_dir = wp_upload_dir();
+        
+        $new_file_path = $wordpress_upload_dir['path'] . '/'. $fileName;
+
+        //$attachment_id = media_handle_upload('upload_captcha_background', $post->ID);
+        
+        if( move_uploaded_file( $tmp_name, $new_file_path ) ) {
+
+            $upload_id = wp_insert_attachment( array(
+                'guid'           => $new_file_path,
+                'post_mime_type' => $_FILES['file']['type'],
+                'post_title'     => preg_replace( '/\.[^.]+$/', '', $fileName ),
+                'post_content'   => '',
+                'post_status'    => 'inherit'
+            ), $new_file_path );
+
+            // wp_generate_attachment_metadata() won't work if you do not include this file
+            require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+            // Generate and save the attachment metas into the database
+            wp_update_attachment_metadata( $upload_id, wp_generate_attachment_metadata( $upload_id, $new_file_path ) );
+            $upload = 'ok';
+        }
+
+    } 
+
+    echo $upload;
+    die;
+}
+
+?>
